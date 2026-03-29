@@ -3,6 +3,6 @@
   "target": {
     "namespace": "android_app",
     "package_name": "com.lesnoy.dnevnik",
-    "sha256_cert_fingerprints": ["СЮДА_ВСТАВЬ_SHA256_ПОСЛЕ_BUBBLEWRAP_INIT"]
+    "sha256_cert_fingerprints": ["CC:FB:66:CA:40:B5:80:F9:36:E7:8A:01:24:1B:B0:4E:94:F5:3F:E2:7E:4D:1E:AB:DB:7B:3F:E6:20:23:9C:F9"]
   }
 }]
