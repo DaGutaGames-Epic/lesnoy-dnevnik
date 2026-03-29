@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a2e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/lesnoy-dnevnik/manifest.json">
+<title>Лесной Дневник</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<!-- Яндекс.Карты подключаются через JS -->
+<style>
+:root{
+  --forest:#1a2e1a;--forest-mid:#2d4a2d;--forest-light:#3d6b3d;
+  --moss:#6b8f5e;--sage:#a8c49a;--cream:#f5f0e8;--amber:#d48c3a;
+  --pine:#4a7c6f;--danger:#c0392b;
+  --text:#1a1a1a;--muted:#5a5a5a;--card:rgba(255,255,255,0.93);--r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Jost',sans-serif;background:var(--forest);color:var(--cream);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 10%,rgba(61,107,61,.4),transparent 55%),radial-gradient(ellipse at 80% 90%,rgba(45,74,45,.5),transparent 55%);pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:84px}
+
+/* Header */
+.hdr{padding:18px 18px 10px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'Playfair Display',serif;font-size:21px;font-weight:700}
+.logo span{color:var(--sage)}
+.hdr-date{font-size:11px;color:var(--sage);letter-spacing:.09em;text-transform:uppercase}
+
+/* Sections */
+.sec{margin:0 14px 18px}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.sec-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:600}
+
+/* Buttons */
+.btn-primary{display:inline-flex;align-items:center;gap:5px;background:var(--moss);color:#fff;border:none;padding:8px 15px;border-radius:28px;font-family:'Jost',sans-serif;font-size:13px;font-weight:500;cursor:pointer;letter-spacing:.03em;transition:background .2s,transform .15s}
+.btn-primary:hover{background:var(--forest-light)}
+.btn-primary:active{transform:scale(.97)}
+
+/* Empty state */
+.empty{text-align:center;padding:44px 20px 20px;opacity:.55}
+.empty-icon{font-size:50px;margin-bottom:12px}
+.empty-title{font-family:'Playfair Display',serif;font-size:17px;margin-bottom:7px}
+.empty-sub{font-size:13px;line-height:1.6}
+
+/* Harvest cards */
+.harvest-list{display:flex;flex-direction:column;gap:10px}
+.hcard{background:var(--card);border-radius:var(--r);padding:13px 15px;color:var(--text);position:relative;overflow:hidden;cursor:pointer;transition:transform .18s,box-shadow .18s}
+.hcard:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.12)}
+.hcard:active{transform:scale(.985)}
+.hcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
+.hcard.s-now::before{background:var(--moss)}
+.hcard.s-soon::before{background:var(--amber)}
+.hcard.s-future::before{background:var(--pine)}
+.hcard.s-past::before{background:#bbb}
+.hc-top{display:flex;align-items:flex-start;gap:11px}
+.hc-emoji{font-size:28px;flex-shrink:0;line-height:1.1}
+.hc-info{flex:1;min-width:0}
+.hc-name{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;margin-bottom:2px}
+.hc-dates{font-size:12px;color:var(--muted);margin-bottom:5px}
+.hc-tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.t-now{background:rgba(107,143,94,.18);color:#2d5a1e}
+.t-soon{background:rgba(212,140,58,.18);color:#7a4800}
+.t-future{background:rgba(74,124,111,.18);color:var(--pine)}
+.t-past{background:rgba(0,0,0,.08);color:#888}
+.t-days{background:rgba(212,140,58,.25);color:#6b3e00}
+.hc-bell{font-size:17px;opacity:.4;cursor:pointer;padding:4px;transition:opacity .2s,transform .2s;flex-shrink:0}
+.hc-bell.on{opacity:1}
+.hc-bell:hover{transform:rotate(-12deg) scale(1.15)}
+.hc-note{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.5;padding-top:7px;border-top:1px solid rgba(0,0,0,.07)}
+
+/* Urgent */
+.urgent{margin:0 14px 12px;background:rgba(212,140,58,.12);border:1px solid rgba(212,140,58,.3);border-radius:var(--r);padding:12px 15px;display:flex;align-items:center;gap:10px}
+.urg-icon{font-size:22px;flex-shrink:0}
+.urg-text{flex:1}
+.urg-title{font-size:14px;font-weight:500;color:var(--amber);margin-bottom:1px}
+.urg-sub{font-size:12px;opacity:.75}
+.urg-days{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--amber);line-height:1;text-align:center;flex-shrink:0}
+.urg-days small{font-family:'Jost',sans-serif;font-size:10px;font-weight:400;opacity:.65;display:block}
+
+/* Calendar */
+.cal-wrap{background:var(--card);border-radius:var(--r);padding:14px;color:var(--text);margin-bottom:14px}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-nav-btn{background:none;border:none;font-size:22px;cursor:pointer;padding:4px 12px;color:var(--muted);border-radius:7px;line-height:1;transition:background .15s}
+.cal-nav-btn:hover{background:rgba(0,0,0,.07)}
+.cal-month{font-family:'Playfair Display',serif;font-size:15px;font-weight:600}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cdl{text-align:center;font-size:10px;color:var(--muted);font-weight:500;letter-spacing:.05em;padding:3px 0}
+.cd{aspect-ratio:1;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text);position:relative;cursor:default;user-select:none}
+.cd.other{opacity:.25}
+.cd.today{background:var(--moss)!important;color:#fff;font-weight:600}
+.cd.ev{background:rgba(107,143,94,.2)}
+.cd.pk{background:rgba(212,140,58,.2)}
+.cd .dot{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--amber)}
+.ev-list{display:flex;flex-direction:column;gap:8px}
+.ev-item{background:var(--card);border-radius:10px;padding:11px 13px;color:var(--text);display:flex;align-items:center;gap:10px}
+.ev-emoji{font-size:22px;flex-shrink:0}
+.ev-info{flex:1}
+.ev-name{font-family:'Playfair Display',serif;font-size:13px;font-weight:600;margin-bottom:1px}
+.ev-date{font-size:11px;color:var(--muted)}
+
+/* Diary */
+.dlist{display:flex;flex-direction:column;gap:10px}
+.dcard{background:var(--card);border-radius:var(--r);padding:13px 14px;color:var(--text);transition:transform .18s;cursor:pointer}
+.dcard:hover{transform:translateY(-1px)}
+.dc-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}
+.dc-thumb{width:52px;height:52px;border-radius:10px;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,var(--moss),var(--pine));display:flex;align-items:center;justify-content:center;font-size:24px}
+.dc-thumb img{width:100%;height:100%;object-fit:cover}
+.dc-meta{flex:1}
+.dc-name{font-family:'Playfair Display',serif;font-size:14px;font-weight:600;margin-bottom:2px}
+.dc-sub{font-size:11px;color:var(--muted);line-height:1.5}
+.dc-amount{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--forest-light);white-space:nowrap}
+.dc-note{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* Map */
+.map-wrap{position:relative}
+#leafletMap{height:290px;width:100%;border-radius:var(--r) var(--r) 0 0;z-index:1}
+.map-card{background:var(--card);border-radius:var(--r);overflow:hidden;color:var(--text)}
+.map-bar{padding:11px 14px;display:flex;align-items:center;gap:10px}
+.map-bar-text{flex:1;font-size:13px;color:var(--muted)}
+.map-bar-text strong{color:var(--text);font-weight:500;font-size:14px;display:block}
+.loc-btn{position:absolute;top:10px;right:10px;z-index:999;background:#fff;border:none;border-radius:8px;width:36px;height:36px;font-size:17px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center}
+.slist{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.sitem{background:var(--card);border-radius:10px;padding:11px 13px;color:var(--text);display:flex;align-items:center;gap:10px;cursor:pointer}
+.sitem:hover{box-shadow:0 2px 10px rgba(0,0,0,.1)}
+.sitem-emoji{font-size:21px;flex-shrink:0}
+.sitem-info{flex:1}
+.sitem-name{font-size:14px;font-weight:500;margin-bottom:1px}
+.sitem-coords{font-size:11px;color:var(--muted)}
+.sitem-del{font-size:18px;opacity:.4;cursor:pointer;padding:4px;flex-shrink:0}
+.sitem-del:hover{opacity:.7}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{background:var(--card);border-radius:12px;padding:14px;color:var(--text);text-align:center}
+.stat-val{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--forest-light);line-height:1;margin-bottom:4px}
+.stat-lbl{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.bar-chart{background:var(--card);border-radius:var(--r);padding:14px;color:var(--text);margin-bottom:14px}
+.bar-title{font-family:'Playfair Display',serif;font-size:14px;font-weight:600;margin-bottom:12px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.bar-lbl{font-size:11px;color:var(--muted);width:26px;flex-shrink:0;text-align:right}
+.bar-track{flex:1;height:18px;background:rgba(0,0,0,.06);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:var(--moss);display:flex;align-items:center;padding-left:6px}
+.bar-val{font-size:10px;color:#fff;font-weight:500;white-space:nowrap}
+.top-list{background:var(--card);border-radius:var(--r);padding:14px;color:var(--text)}
+.top-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.05)}
+.top-item:last-child{border-bottom:none}
+.top-rank{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--amber);width:20px;flex-shrink:0}
+.top-emoji{font-size:20px;flex-shrink:0}
+.top-name{flex:1;font-size:13px;font-weight:500}
+.top-cnt{font-size:12px;color:var(--muted)}
+
+/* Settings */
+.sg{margin-bottom:18px}
+.sg-title{font-size:11px;color:var(--sage);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;font-weight:500}
+.si{background:var(--card);border-radius:10px;padding:12px 13px;display:flex;align-items:center;gap:11px;color:var(--text);margin-bottom:7px;cursor:pointer}
+.si:hover{box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.si-icon{font-size:20px;flex-shrink:0}
+.si-text{flex:1}
+.si-name{font-size:14px;font-weight:500;margin-bottom:1px}
+.si-desc{font-size:12px;color:var(--muted)}
+.si-arr{opacity:.3;font-size:16px}
+.toggle{width:44px;height:26px;background:rgba(0,0,0,.15);border-radius:13px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--moss)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle.on::after{left:21px}
+
+/* Bottom nav */
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(26,46,26,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(168,196,154,.15);display:flex;z-index:99;padding-bottom:env(safe-area-inset-bottom)}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;cursor:pointer;border:none;background:none;color:var(--sage);opacity:.5;transition:opacity .2s;font-family:'Jost',sans-serif}
+.nbtn.active{opacity:1}
+.nbtn:hover{opacity:.8}
+.ni{font-size:18px}
+.nl{font-size:9px;letter-spacing:.05em;text-transform:uppercase;font-weight:500}
+
+/* Modal */
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.moverlay.open{display:flex}
+.modal{background:var(--cream);color:var(--text);width:100%;max-width:480px;border-radius:22px 22px 0 0;padding:18px 18px 34px;max-height:88vh;overflow-y:auto;animation:slideUp .28s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mhandle{width:38px;height:4px;background:rgba(0,0,0,.13);border-radius:2px;margin:0 auto 16px}
+.mtitle{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.mclose{background:none;border:none;font-size:19px;cursor:pointer;opacity:.4;padding:2px}
+.mclose:hover{opacity:.7}
+.field{margin-bottom:12px}
+.flabel{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
+.finput{width:100%;padding:10px 12px;border:1.5px solid rgba(0,0,0,.1);border-radius:9px;font-family:'Jost',sans-serif;font-size:14px;outline:none;background:#fff;color:var(--text);transition:border-color .2s}
+.finput:focus{border-color:var(--moss)}
+.frow{display:flex;gap:10px}
+.frow .field{flex:1}
+.ep{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.epb{width:38px;height:38px;border-radius:8px;border:1.5px solid transparent;background:rgba(0,0,0,.06);font-size:19px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.epb:hover,.epb.sel{border-color:var(--moss);background:rgba(107,143,94,.14)}
+.photo-drop{border:2px dashed rgba(0,0,0,.13);border-radius:9px;padding:16px;text-align:center;cursor:pointer;color:var(--muted);font-size:13px;transition:border-color .2s}
+.photo-drop:hover{border-color:var(--moss)}
+.btn-save{width:100%;padding:12px;background:var(--forest);color:#fff;border:none;border-radius:10px;font-family:'Jost',sans-serif;font-size:15px;font-weight:500;cursor:pointer;margin-top:16px;letter-spacing:.04em;transition:background .2s}
+.btn-save:hover{background:var(--forest-light)}
+.btn-del{width:100%;padding:11px;background:rgba(192,57,43,.1);color:var(--danger);border:1px solid rgba(192,57,43,.25);border-radius:10px;font-family:'Jost',sans-serif;font-size:14px;cursor:pointer;margin-top:9px;transition:background .15s}
+.btn-del:hover{background:rgba(192,57,43,.18)}
+
+/* Toast */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-70px);background:var(--forest-mid);color:var(--cream);padding:10px 18px;border-radius:28px;font-size:13px;font-weight:500;z-index:300;transition:transform .3s;border:1px solid rgba(168,196,154,.2);white-space:nowrap;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+.view{display:none}
+.view.active{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <div class="logo">Лесной <span>Дневник</span></div>
+    <div class="hdr-date" id="hdrDate"></div>
+  </div>
+
+  <!-- ГЛАВНАЯ -->
+  <div class="view active" id="view-home">
+    <div class="sec" style="margin-bottom:10px">
+      <div class="sec-hdr">
+        <div class="sec-title">Мои сборы</div>
+        <button class="btn-primary" id="btnAddHarvest">＋ Добавить сбор</button>
+      </div>
+    </div>
+    <div id="urgentWrap"></div>
+    <div class="sec">
+      <div class="harvest-list" id="harvestList"></div>
+      <div id="harvestEmpty" class="empty" style="display:none">
+        <div class="empty-icon">🌿</div>
+        <div class="empty-title">Нет добавленных сборов</div>
+        <div class="empty-sub">Нажмите «＋ Добавить сбор» — укажите что и когда собирать</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- КАЛЕНДАРЬ -->
+  <div class="view" id="view-calendar">
+    <div class="sec">
+      <div class="sec-title" style="margin-bottom:12px">Календарь сборов</div>
+      <div class="cal-wrap">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" id="btnCalPrev">‹</button>
+          <div class="cal-month" id="calLabel"></div>
+          <button class="cal-nav-btn" id="btnCalNext">›</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+      <div class="sec-title" style="margin-bottom:10px">События месяца</div>
+      <div class="ev-list" id="calEvents"></div>
+    </div>
+  </div>
+
+  <!-- ДНЕВНИК -->
+  <div class="view" id="view-diary">
+    <div class="sec">
+      <div class="sec-hdr">
+        <div class="sec-title">Дневник находок</div>
+        <button class="btn-primary" id="btnAddDiary">＋ Запись</button>
+      </div>
+      <div class="dlist" id="diaryList"></div>
+      <div id="diaryEmpty" class="empty" style="display:none">
+        <div class="empty-icon">📓</div>
+        <div class="empty-title">Дневник пуст</div>
+        <div class="empty-sub">Добавляйте записи после каждого выхода в лес</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- МЕСТА -->
+  <div class="view" id="view-map">
+    <div class="sec">
+      <div class="sec-hdr" style="margin-bottom:12px">
+        <div class="sec-title">Места сборов</div>
+        <button class="btn-primary" id="btnAddSpot">＋ Место</button>
+      </div>
+      <div class="map-card">
+        <div class="map-wrap">
+          <div id="leafletMap"></div>
+          <button class="loc-btn" id="btnLocate">🎯</button>
+        </div>
+        <div class="map-bar">
+          <div class="map-bar-text">
+            <strong id="mapSelName">Нажмите на метку</strong>
+            <span id="mapSelInfo">Нажмите на карту — добавится место</span>
+          </div>
+        </div>
+      </div>
+      <div class="slist" id="spotsList"></div>
+    </div>
+  </div>
+
+  <!-- ИТОГИ -->
+  <div class="view" id="view-stats">
+    <div class="sec">
+      <div class="sec-title" style="margin-bottom:12px">Моя статистика</div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="bar-chart">
+        <div class="bar-title">Находки по месяцам</div>
+        <div id="statsMonthBars"></div>
+      </div>
+      <div class="sec-title" style="margin-bottom:10px">Топ находок</div>
+      <div class="top-list" id="statsTopList"></div>
+    </div>
+  </div>
+
+  <!-- НАСТРОЙКИ -->
+  <div class="view" id="view-settings">
+    <div class="sec">
+      <div class="sg">
+        <div class="sg-title">Регион</div>
+        <div class="si" id="btnOpenRegion">
+          <div class="si-icon">📍</div>
+          <div class="si-text">
+            <div class="si-name" id="regName">Северная Осетия — Алания</div>
+            <div class="si-desc" id="regDesc">Горный регион, сдвиг сезонов учтён</div>
+          </div>
+          <div class="si-arr">›</div>
+        </div>
+      </div>
+      <div class="sg">
+        <div class="sg-title">Уведомления</div>
+        <div class="si">
+          <div class="si-icon">🔔</div>
+          <div class="si-text"><div class="si-name">Напоминания о сборах</div><div class="si-desc">За несколько дней до начала</div></div>
+          <div class="toggle on" id="toggleNotify"></div>
+        </div>
+        <div class="si" id="btnRequestNotify">
+          <div class="si-icon">📲</div>
+          <div class="si-text"><div class="si-name">Включить push-уведомления</div><div class="si-desc">Разрешить браузеру присылать напоминания</div></div>
+          <div class="si-arr">›</div>
+        </div>
+      </div>
+      <div class="sg">
+        <div class="sg-title">Данные</div>
+        <div class="si" id="btnExport">
+          <div class="si-icon">📤</div>
+          <div class="si-text"><div class="si-name">Экспорт дневника</div><div class="si-desc">Сохранить всё в JSON файл</div></div>
+          <div class="si-arr">›</div>
+        </div>
+        <div class="si" id="btnClearAll">
+          <div class="si-icon">🗑️</div>
+          <div class="si-text"><div class="si-name">Очистить все данные</div><div class="si-desc" style="color:var(--danger)">Удалить сборы, дневник и места</div></div>
+          <div class="si-arr">›</div>
+        </div>
+      </div>
+      <div style="text-align:center;padding:14px;opacity:.3;font-size:11px">Лесной Дневник v2.1 · PWA · Сев. Осетия</div>
+    </div>
+  </div>
+</div>
+
+<!-- Нижняя навигация -->
+<div class="bnav">
+  <button class="nbtn active" data-view="home"><span class="ni">🏠</span><span class="nl">Главная</span></button>
+  <button class="nbtn" data-view="calendar"><span class="ni">📅</span><span class="nl">Календарь</span></button>
+  <button class="nbtn" data-view="diary"><span class="ni">📓</span><span class="nl">Дневник</span></button>
+  <button class="nbtn" data-view="map"><span class="ni">🗺️</span><span class="nl">Места</span></button>
+  <button class="nbtn" data-view="stats"><span class="ni">📊</span><span class="nl">Итоги</span></button>
+  <button class="nbtn" data-view="settings"><span class="ni">⚙️</span><span class="nl">Настройки</span></button>
+</div>
+
+<!-- Модальное окно: Новый сбор -->
+<div class="moverlay" id="mHarvest">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">Новый сбор <button class="mclose" data-close="mHarvest">✕</button></div>
+    <div class="field"><div class="flabel">Иконка</div><div class="ep" id="epH"></div></div>
+    <div class="field"><div class="flabel">Что собираем</div><input class="finput" id="hN" placeholder="Черника, белый гриб, сосновая пыльца..."/></div>
+    <div class="field"><div class="flabel">Заметка (необязательно)</div><input class="finput" id="hNt" placeholder="Где растёт, особенности..."/></div>
+    <div class="frow">
+      <div class="field"><div class="flabel">Начало сбора</div><input class="finput" type="date" id="hS"/></div>
+      <div class="field"><div class="flabel">Конец сбора</div><input class="finput" type="date" id="hE"/></div>
+    </div>
+    <div class="field">
+      <div class="flabel">Напомнить за</div>
+      <select class="finput" id="hR">
+        <option value="1">1 день</option>
+        <option value="3" selected>3 дня</option>
+        <option value="7">7 дней</option>
+        <option value="14">2 недели</option>
+      </select>
+    </div>
+    <button class="btn-save" id="btnSaveHarvest">＋ Добавить сбор</button>
+  </div>
+</div>
+
+<!-- Модальное окно: Редактировать сбор -->
+<div class="moverlay" id="mHarvestEdit">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">Редактировать <button class="mclose" data-close="mHarvestEdit">✕</button></div>
+    <div class="field"><div class="flabel">Иконка</div><div class="ep" id="epHE"></div></div>
+    <div class="field"><div class="flabel">Название</div><input class="finput" id="hEN"/></div>
+    <div class="field"><div class="flabel">Заметка</div><input class="finput" id="hENt"/></div>
+    <div class="frow">
+      <div class="field"><div class="flabel">Начало</div><input class="finput" type="date" id="hES"/></div>
+      <div class="field"><div class="flabel">Конец</div><input class="finput" type="date" id="hEE"/></div>
+    </div>
+    <input type="hidden" id="hEId"/>
+    <button class="btn-save" id="btnUpdateHarvest">Сохранить</button>
+    <button class="btn-del" id="btnDeleteHarvest">Удалить сбор</button>
+  </div>
+</div>
+
+<!-- Модальное окно: Запись в дневник -->
+<div class="moverlay" id="mDiary">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">Запись в дневник <button class="mclose" data-close="mDiary">✕</button></div>
+    <div class="field"><div class="flabel">Иконка</div><div class="ep" id="epD"></div></div>
+    <div class="field"><div class="flabel">Что нашли</div><input class="finput" id="dN" placeholder="Белый гриб, черника..."/></div>
+    <div class="frow">
+      <div class="field"><div class="flabel">Количество</div><input class="finput" id="dA" placeholder="2 кг, 12 шт..."/></div>
+      <div class="field"><div class="flabel">Дата</div><input class="finput" type="date" id="dD"/></div>
+    </div>
+    <div class="field"><div class="flabel">Место</div><input class="finput" id="dP" placeholder="Лес у горы Столовой..."/></div>
+    <div class="field"><div class="flabel">Заметка</div><input class="finput" id="dNt" placeholder="Росло у ручья, крупные..."/></div>
+    <div class="field">
+      <div class="flabel">Фото</div>
+      <div class="photo-drop" id="btnPhotoArea"><div style="font-size:24px;margin-bottom:4px">📷</div>Нажмите для съёмки или галереи</div>
+      <input type="file" id="photoIn" accept="image/*" capture="environment" style="display:none">
+      <div id="photoPreview" style="margin-top:7px"></div>
+    </div>
+    <button class="btn-save" id="btnSaveDiary">Сохранить запись</button>
+  </div>
+</div>
+
+<!-- Модальное окно: Регион -->
+<div class="moverlay" id="mRegion">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">Выбор региона <button class="mclose" data-close="mRegion">✕</button></div>
+    <div id="regionList" style="display:flex;flex-direction:column;gap:7px"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://api-maps.yandex.ru/2.1/?apikey=49afff46-fb42-4002-93b3-ab37cdb8ca02&lang=ru_RU" type="text/javascript"></script>
+<script>
+'use strict';
+
+// ── КОНСТАНТЫ ─────────────────────────────────────────────────────────────
+var REGIONS = [
+  {id:'north_ossetia', name:'Северная Осетия — Алания', shift:7,  desc:'Горный регион, сезоны немного позже'},
+  {id:'central',       name:'Центральная Россия',        shift:0,  desc:'Москва, Ярославль, Тула...'},
+  {id:'northwest',     name:'Северо-Запад',              shift:14, desc:'Петербург, Карелия, Псков'},
+  {id:'south',         name:'Юг России / Кавказ',        shift:-14,desc:'Краснодар, Ставрополь'},
+  {id:'ural',          name:'Урал и Поволжье',           shift:7,  desc:'Екатеринбург, Казань'},
+  {id:'siberia',       name:'Сибирь',                    shift:21, desc:'Новосибирск, Иркутск'},
+  {id:'belarus',       name:'Беларусь / Украина',        shift:-7, desc:''}
+];
+
+var EMOJIS = ['🍄','🫐','🍓','🌲','🌿','🌸','🍁','🌾','🍃','🌰','🌺','🍒','🌻','🪻','🌱','🍏','🌼','📍','🪨','🫚'];
+var MG = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+var MN = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+// ── СОСТОЯНИЕ ─────────────────────────────────────────────────────────────
+var harvests = JSON.parse(localStorage.getItem('lf2_h') || '[]');
+var diary    = JSON.parse(localStorage.getItem('lf2_d') || '[]');
+var spots    = JSON.parse(localStorage.getItem('lf2_s') || '[]');
+var region   = JSON.parse(localStorage.getItem('lf2_r') || 'null') || REGIONS[0];
+
+var selEH  = '🌿';
+var selEHE = '🌿';
+var selED  = '🍄';
+var photoData = null;
+var calY, calM;
+var today = new Date();
+calY = today.getFullYear();
+calM = today.getMonth();
+
+function save() {
+  localStorage.setItem('lf2_h', JSON.stringify(harvests));
+  localStorage.setItem('lf2_d', JSON.stringify(diary));
+  localStorage.setItem('lf2_s', JSON.stringify(spots));
+  localStorage.setItem('lf2_r', JSON.stringify(region));
+}
+
+// ── ДАТЫ (хранятся как MM-DD, повторяются каждый год) ────────────────────
+function toMMDD(s) {
+  if (!s) return '';
+  var p = s.split('-');
+  return p.length === 3 ? p[1] + '-' + p[2] : s;
+}
+function toInputDate(mmdd) {
+  return today.getFullYear() + '-' + mmdd;
+}
+function shiftMMDD(mmdd, days) {
+  if (!mmdd) return mmdd;
+  var d = new Date('2000-' + mmdd + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function resolveYearDates(h) {
+  var sMMDD = shiftMMDD(toMMDD(h.start), region.shift);
+  var eMMDD = shiftMMDD(toMMDD(h.end),   region.shift);
+  var yr = today.getFullYear();
+  var s = new Date(yr + '-' + sMMDD + 'T00:00:00');
+  var e = new Date(yr + '-' + eMMDD + 'T00:00:00');
+  if (e < today && (today - e) > 86400000) {
+    s = new Date((yr+1) + '-' + sMMDD + 'T00:00:00');
+    e = new Date((yr+1) + '-' + eMMDD + 'T00:00:00');
+  }
+  return {s: s, e: e};
+}
+function eStart(h) { return resolveYearDates(h).s.toISOString().slice(0,10); }
+function eEnd(h)   { return resolveYearDates(h).e.toISOString().slice(0,10); }
+function getStatus(h) {
+  var d = resolveYearDates(h);
+  if (today >= d.s && today <= d.e) return 'now';
+  var diff = (d.s - today) / 86400000;
+  if (diff > 0 && diff <= 30) return 'soon';
+  if (diff > 30) return 'future';
+  return 'past';
+}
+function daysUntil(h) { return Math.ceil((resolveYearDates(h).s - today) / 86400000); }
+function fmtD(s) {
+  var d = new Date(s + 'T00:00:00');
+  return d.getDate() + ' ' + MG[d.getMonth()];
+}
+function fmtFull(s) {
+  var d = new Date(s);
+  return d.getDate() + ' ' + MG[d.getMonth()] + ' ' + d.getFullYear();
+}
+function stLabel(s) {
+  if (s === 'now')    return ['t-now',    'Сейчас'];
+  if (s === 'soon')   return ['t-soon',   'Скоро'];
+  if (s === 'future') return ['t-future', 'Впереди'];
+  return ['t-past', 'Прошёл'];
+}
+
+// ── НАВИГАЦИЯ ─────────────────────────────────────────────────────────────
+function switchView(v) {
+  document.querySelectorAll('.view').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.nbtn').forEach(function(el) { el.classList.remove('active'); });
+  var vEl = document.getElementById('view-' + v);
+  var nEl = document.querySelector('.nbtn[data-view="' + v + '"]');
+  if (vEl) vEl.classList.add('active');
+  if (nEl) nEl.classList.add('active');
+  if (v === 'home')     renderHome();
+  if (v === 'calendar') renderCalendar();
+  if (v === 'diary')    renderDiary();
+  if (v === 'map')      initMap();
+  if (v === 'stats')    renderStats();
+}
+
+// ── ГЛАВНАЯ ───────────────────────────────────────────────────────────────
+function renderHome() {
+  var DS = ['вс','пн','вт','ср','чт','пт','сб'];
+  var MS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('hdrDate').textContent = DS[today.getDay()] + ', ' + today.getDate() + ' ' + MS[today.getMonth()];
+
+  var soon = harvests.filter(function(h) { return getStatus(h) === 'soon'; })
+    .sort(function(a, b) { return daysUntil(a) - daysUntil(b); });
+  var uw = document.getElementById('urgentWrap');
+  if (soon.length) {
+    var h = soon[0], d = daysUntil(h);
+    uw.innerHTML = '<div class="urgent"><div class="urg-icon">⚠️</div><div class="urg-text"><div class="urg-title">' + h.emoji + ' ' + h.name + '</div><div class="urg-sub">Начало ' + fmtD(eStart(h)) + ' — не пропусти!</div></div><div class="urg-days">' + d + '<small>дней</small></div></div>';
+  } else {
+    uw.innerHTML = '';
+  }
+
+  var order = {now:0, soon:1, future:2, past:3};
+  var sorted = harvests.slice().sort(function(a,b) { return order[getStatus(a)] - order[getStatus(b)]; });
+  var list  = document.getElementById('harvestList');
+  var empty = document.getElementById('harvestEmpty');
+  if (!sorted.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = sorted.map(function(h) {
+    var s = getStatus(h), sl = stLabel(s), cls = sl[0], lbl = sl[1];
+    var d = daysUntil(h);
+    var extra = s === 'soon' ? '<span class="tag t-days">через ' + d + ' дн.</span>' : '';
+    var note  = h.note ? '<div class="hc-note">' + h.note + '</div>' : '';
+    return '<div class="hcard s-' + s + '" data-hid="' + h.id + '">' +
+      '<div class="hc-top">' +
+      '<div class="hc-emoji">' + h.emoji + '</div>' +
+      '<div class="hc-info">' +
+      '<div class="hc-name">' + h.name + '</div>' +
+      '<div class="hc-dates">' + fmtD(eStart(h)) + ' — ' + fmtD(eEnd(h)) + '</div>' +
+      '<div class="hc-tags"><span class="tag ' + cls + '">' + lbl + '</span>' + extra + '</div>' +
+      '</div>' +
+      '<div class="hc-bell ' + (h.bell ? 'on' : '') + '" data-bell="' + h.id + '">🔔</div>' +
+      '</div>' + note + '</div>';
+  }).join('');
+
+  // Привязываем обработчики к карточкам
+  list.querySelectorAll('.hcard').forEach(function(card) {
+    card.addEventListener('click', function(e) {
+      if (e.target.closest('[data-bell]')) return;
+      openEditHarvest(+card.dataset.hid);
+    });
+  });
+  list.querySelectorAll('[data-bell]').forEach(function(bell) {
+    bell.addEventListener('click', function(e) {
+      e.stopPropagation();
+      toggleBell(+bell.dataset.bell);
+    });
+  });
+}
+
+function toggleBell(id) {
+  var h = harvests.find(function(x) { return x.id === id; });
+  if (h) { h.bell = !h.bell; save(); renderHome(); }
+}
+
+// ── СБОРЫ ─────────────────────────────────────────────────────────────────
+function openAddHarvest() {
+  selEH = '🌿';
+  buildEP('epH', function() { return selEH; }, function(v) { selEH = v; });
+  document.getElementById('hN').value  = '';
+  document.getElementById('hNt').value = '';
+  document.getElementById('hS').value  = '';
+  document.getElementById('hE').value  = '';
+  openM('mHarvest');
+}
+
+function saveHarvest() {
+  var name = document.getElementById('hN').value.trim();
+  var s    = document.getElementById('hS').value;
+  var e    = document.getElementById('hE').value;
+  if (!name)   { showToast('⚠️ Введите название'); return; }
+  if (!s || !e){ showToast('⚠️ Укажите даты сбора'); return; }
+  if (s > e)   { showToast('⚠️ Начало позже конца'); return; }
+  var h = {
+    id: Date.now(), emoji: selEH, name: name,
+    note: document.getElementById('hNt').value.trim(),
+    start: toMMDD(s), end: toMMDD(e),
+    remind: +document.getElementById('hR').value, bell: true
+  };
+  harvests.push(h);
+  save();
+  closeM('mHarvest');
+  showToast('✅ Сбор добавлен!');
+  renderHome();
+  renderCalendar();
+}
+
+function openEditHarvest(id) {
+  var h = harvests.find(function(x) { return x.id === id; });
+  if (!h) return;
+  selEHE = h.emoji;
+  buildEP('epHE', function() { return selEHE; }, function(v) { selEHE = v; });
+  setTimeout(function() {
+    document.querySelectorAll('#epHE .epb').forEach(function(b) {
+      b.classList.toggle('sel', b.dataset.e === h.emoji);
+    });
+  }, 20);
+  document.getElementById('hEId').value  = h.id;
+  document.getElementById('hEN').value   = h.name;
+  document.getElementById('hENt').value  = h.note || '';
+  document.getElementById('hES').value   = toInputDate(toMMDD(h.start));
+  document.getElementById('hEE').value   = toInputDate(toMMDD(h.end));
+  openM('mHarvestEdit');
+}
+
+function updateHarvest() {
+  var id = +document.getElementById('hEId').value;
+  var h  = harvests.find(function(x) { return x.id === id; });
+  if (!h) return;
+  var name = document.getElementById('hEN').value.trim();
+  var s    = document.getElementById('hES').value;
+  var e    = document.getElementById('hEE').value;
+  if (!name || !s || !e) { showToast('⚠️ Заполните все поля'); return; }
+  h.emoji = selEHE; h.name = name;
+  h.note  = document.getElementById('hENt').value.trim();
+  h.start = toMMDD(s); h.end = toMMDD(e);
+  save(); closeM('mHarvestEdit'); showToast('✅ Обновлено');
+  renderHome(); renderCalendar();
+}
+
+function deleteHarvest() {
+  if (!confirm('Удалить этот сбор?')) return;
+  var id = +document.getElementById('hEId').value;
+  harvests = harvests.filter(function(x) { return x.id !== id; });
+  save(); closeM('mHarvestEdit'); showToast('🗑️ Удалено');
+  renderHome(); renderCalendar();
+}
+
+// ── КАЛЕНДАРЬ ─────────────────────────────────────────────────────────────
+function renderCalendar() {
+  document.getElementById('calLabel').textContent = MN[calM] + ' ' + calY;
+  var first = (new Date(calY, calM, 1).getDay() + 6) % 7;
+  var dim   = new Date(calY, calM+1, 0).getDate();
+  var prev  = new Date(calY, calM, 0).getDate();
+
+  // Строим карту событий
+  var ev = {};
+  harvests.forEach(function(h) {
+    var sMMDD = shiftMMDD(toMMDD(h.start), region.shift);
+    var eMMDD = shiftMMDD(toMMDD(h.end),   region.shift);
+    [-1, 0, 1].forEach(function(offset) {
+      var yr = calY + offset;
+      var s  = new Date(yr + '-' + sMMDD + 'T00:00:00');
+      var e  = new Date(yr + '-' + eMMDD + 'T00:00:00');
+      if (e < s) e = new Date((yr+1) + '-' + eMMDD + 'T00:00:00');
+      var cur = new Date(s);
+      while (cur <= e) {
+        if (cur.getFullYear() === calY && cur.getMonth() === calM) {
+          var dd = cur.getDate();
+          var inS = (cur - s) / 86400000, tot = (e - s) / 86400000;
+          var type = (inS < 3 || inS > tot - 3) ? 'pk' : 'ev';
+          if (!ev[dd] || ev[dd] !== 'pk') ev[dd] = type;
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+  });
+
+  var LBLS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  var html = LBLS.map(function(l) { return '<div class="cdl">' + l + '</div>'; }).join('');
+  for (var i = 0; i < first; i++) html += '<div class="cd other">' + (prev - first + i + 1) + '</div>';
+  for (var d = 1; d <= dim; d++) {
+    var isT = d === today.getDate() && calY === today.getFullYear() && calM === today.getMonth();
+    var e2  = ev[d];
+    var cls = isT ? 'today' : (e2 ? e2 : '');
+    var dot = e2 && !isT ? '<div class="dot"></div>' : '';
+    html += '<div class="cd ' + cls + '">' + d + dot + '</div>';
+  }
+  var rem = (first + dim) % 7;
+  if (rem) for (var j = 1; j <= 7 - rem; j++) html += '<div class="cd other">' + j + '</div>';
+  document.getElementById('calGrid').innerHTML = html;
+
+  // Список событий месяца
+  var evts = harvests.filter(function(h) {
+    var sMMDD = shiftMMDD(toMMDD(h.start), region.shift);
+    var eMMDD = shiftMMDD(toMMDD(h.end),   region.shift);
+    var mS = new Date(calY, calM, 1), mE = new Date(calY, calM+1, 0);
+    var found = false;
+    [-1, 0, 1].forEach(function(off) {
+      var yr = calY + off;
+      var s = new Date(yr + '-' + sMMDD + 'T00:00:00');
+      var e = new Date(yr + '-' + eMMDD + 'T00:00:00');
+      if (e < s) e = new Date((yr+1) + '-' + eMMDD + 'T00:00:00');
+      if (s <= mE && e >= mS) found = true;
+    });
+    return found;
+  }).sort(function(a, b) { return toMMDD(a.start).localeCompare(toMMDD(b.start)); });
+
+  var calEv = document.getElementById('calEvents');
+  if (!evts.length) {
+    calEv.innerHTML = '<div style="opacity:.5;font-size:13px;padding:8px 0">Нет сборов в этом месяце — добавьте на главной</div>';
+  } else {
+    calEv.innerHTML = evts.map(function(h) {
+      var sl = stLabel(getStatus(h));
+      return '<div class="ev-item">' +
+        '<div class="ev-emoji">' + h.emoji + '</div>' +
+        '<div class="ev-info"><div class="ev-name">' + h.name + '</div>' +
+        '<div class="ev-date">' + fmtD(eStart(h)) + ' — ' + fmtD(eEnd(h)) + '</div></div>' +
+        '<span class="tag ' + sl[0] + '">' + sl[1] + '</span></div>';
+    }).join('');
+  }
+}
+
+// ── ДНЕВНИК ───────────────────────────────────────────────────────────────
+function renderDiary() {
+  var list  = document.getElementById('diaryList');
+  var empty = document.getElementById('diaryEmpty');
+  var sorted = diary.slice().sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
+  if (!sorted.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = sorted.map(function(e) {
+    return '<div class="dcard">' +
+      '<div class="dc-top">' +
+      '<div class="dc-thumb">' + (e.photo ? '<img src="' + e.photo + '">' : e.emoji) + '</div>' +
+      '<div class="dc-meta"><div class="dc-name">' + e.emoji + ' ' + e.name + '</div>' +
+      '<div class="dc-sub">📅 ' + fmtFull(e.date) + (e.place ? ' · 📍 ' + e.place : '') + '</div></div>' +
+      '<div class="dc-amount">' + (e.amount || '') + '</div>' +
+      '</div>' + (e.note ? '<div class="dc-note">' + e.note + '</div>' : '') + '</div>';
+  }).join('');
+}
+
+function openAddDiary() {
+  selED = '🍄';
+  buildEP('epD', function() { return selED; }, function(v) { selED = v; });
+  ['dN','dA','dP','dNt'].forEach(function(id) { document.getElementById(id).value = ''; });
+  document.getElementById('dD').value = today.toISOString().slice(0,10);
+  photoData = null;
+  document.getElementById('photoPreview').innerHTML = '';
+  openM('mDiary');
+}
+
+function saveDiary() {
+  var name = document.getElementById('dN').value.trim();
+  if (!name) { showToast('⚠️ Введите название'); return; }
+  diary.push({
+    id: Date.now(), emoji: selED, name: name,
+    amount: document.getElementById('dA').value.trim(),
+    date:   document.getElementById('dD').value || today.toISOString().slice(0,10),
+    place:  document.getElementById('dP').value.trim(),
+    note:   document.getElementById('dNt').value.trim(),
+    photo:  photoData
+  });
+  save(); closeM('mDiary'); showToast('✅ Запись сохранена!'); renderDiary();
+}
+
+// ── КАРТА (Яндекс.Карты) ─────────────────────────────────────────────────
+var yMap = null, yMarkers = [];
+
+function initMap() {
+  if (yMap) { renderSpots(); return; }
+  if (typeof ymaps === 'undefined') { setTimeout(initMap, 500); return; }
+  ymaps.ready(function() {
+    yMap = new ymaps.Map('leafletMap', {
+      center: [43.02, 44.68], zoom: 10,
+      controls: ['zoomControl', 'geolocationControl']
+    }, {suppressMapOpenBlock: true});
+
+    yMap.events.add('click', function(e) {
+      var coords = e.get('coords');
+      var name = prompt('Название места:'); if (!name) return;
+      var emoji = prompt('Иконка:', '📍') || '📍';
+      addSpot({id: Date.now(), emoji: emoji, name: name, lat: coords[0], lng: coords[1]});
+      showToast('📍 ' + name + ' добавлено');
+    });
+
+    spots.forEach(function(s) { addMarker(s); });
+    renderSpots();
+  });
+}
+
+function addMarker(s) {
+  if (!yMap || typeof ymaps === 'undefined') return;
+  var pm = new ymaps.Placemark([s.lat, s.lng],
+    {balloonContent: s.name},
+    {
+      iconLayout: ymaps.templateLayoutFactory.createClass(
+        '<div style="font-size:30px;line-height:1;margin-top:-30px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))">$[properties.iconContent]</div>'
+      ),
+      iconContentLayout: ymaps.templateLayoutFactory.createClass(s.emoji),
+      iconShape: {type: 'Circle', coordinates: [0, -15], radius: 18}
+    }
+  );
+  pm.properties.set('iconContent', s.emoji);
+  pm.events.add('click', function() {
+    document.getElementById('mapSelName').textContent = s.emoji + ' ' + s.name;
+    document.getElementById('mapSelInfo').textContent = s.lat.toFixed(4) + ', ' + s.lng.toFixed(4);
+  });
+  yMap.geoObjects.add(pm);
+  yMarkers.push({id: s.id, marker: pm});
+}
+
+function addSpot(s) { spots.push(s); save(); addMarker(s); renderSpots(); }
+
+function removeSpot(id) {
+  var found = yMarkers.find(function(x) { return x.id === id; });
+  if (found && yMap) yMap.geoObjects.remove(found.marker);
+  yMarkers = yMarkers.filter(function(x) { return x.id !== id; });
+  spots = spots.filter(function(s) { return s.id !== id; });
+  save(); renderSpots(); showToast('🗑️ Место удалено');
+}
+
+function flyTo(id) {
+  var s = spots.find(function(x) { return x.id === id; });
+  if (!s || !yMap) return;
+  yMap.setCenter([s.lat, s.lng], 15, {duration: 600});
+  document.getElementById('mapSelName').textContent = s.emoji + ' ' + s.name;
+  document.getElementById('mapSelInfo').textContent = s.lat.toFixed(4) + ', ' + s.lng.toFixed(4);
+}
+
+function renderSpots() {
+  var sl = document.getElementById('spotsList');
+  if (!spots.length) {
+    sl.innerHTML = '<div style="opacity:.5;font-size:13px;padding:8px">Нажмите на карту чтобы добавить место</div>';
+    return;
+  }
+  sl.innerHTML = spots.map(function(s) {
+    return '<div class="sitem" data-sid="' + s.id + '">' +
+      '<div class="sitem-emoji">' + s.emoji + '</div>' +
+      '<div class="sitem-info"><div class="sitem-name">' + s.name + '</div>' +
+      '<div class="sitem-coords">' + s.lat.toFixed(4) + ', ' + s.lng.toFixed(4) + '</div></div>' +
+      '<div class="sitem-del" data-del="' + s.id + '">🗑️</div></div>';
+  }).join('');
+  sl.querySelectorAll('.sitem').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      if (e.target.closest('[data-del]')) return;
+      flyTo(+el.dataset.sid);
+    });
+  });
+  sl.querySelectorAll('[data-del]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) { e.stopPropagation(); removeSpot(+btn.dataset.del); });
+  });
+}
+
+// ── ИТОГИ ─────────────────────────────────────────────────────────────────
+function renderStats() {
+  var yr = today.getFullYear();
+  var thisYr = diary.filter(function(e) { return new Date(e.date).getFullYear() === yr; });
+  var species = new Set(diary.map(function(e) { return e.name.toLowerCase(); })).size;
+  document.getElementById('statsGrid').innerHTML =
+    '<div class="stat-card"><div class="stat-val">' + diary.length + '</div><div class="stat-lbl">Всего записей</div></div>' +
+    '<div class="stat-card"><div class="stat-val">' + thisYr.length + '</div><div class="stat-lbl">В ' + yr + ' году</div></div>' +
+    '<div class="stat-card"><div class="stat-val">' + species + '</div><div class="stat-lbl">Видов найдено</div></div>' +
+    '<div class="stat-card"><div class="stat-val">' + harvests.length + '</div><div class="stat-lbl">Активных сборов</div></div>';
+
+  var mc = Array(12).fill(0);
+  diary.forEach(function(e) { var d = new Date(e.date); if (d.getFullYear() === yr) mc[d.getMonth()]++; });
+  var mx = Math.max.apply(null, mc.concat([1]));
+  var MGL = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+  document.getElementById('statsMonthBars').innerHTML = mc.map(function(c, i) {
+    return '<div class="bar-row"><div class="bar-lbl">' + MGL[i] + '</div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + Math.round(c/mx*100) + '%">' +
+      '<span class="bar-val">' + (c || '') + '</span></div></div></div>';
+  }).join('');
+
+  var cnt = {};
+  diary.forEach(function(e) { var k = e.emoji + '§' + e.name; cnt[k] = (cnt[k] || 0) + 1; });
+  var top = Object.entries(cnt).sort(function(a,b) { return b[1]-a[1]; }).slice(0,5);
+  document.getElementById('statsTopList').innerHTML = top.length
+    ? top.map(function(entry, i) {
+        var parts = entry[0].split('§');
+        return '<div class="top-item"><div class="top-rank">' + ['🥇','🥈','🥉','4','5'][i] + '</div>' +
+          '<div class="top-emoji">' + parts[0] + '</div>' +
+          '<div class="top-name">' + parts.slice(1).join('§') + '</div>' +
+          '<div class="top-cnt">' + entry[1] + '×</div></div>';
+      }).join('')
+    : '<div style="opacity:.5;font-size:13px;padding:10px 0">Добавьте записи в дневник</div>';
+}
+
+// ── РЕГИОН ────────────────────────────────────────────────────────────────
+function openRegion() {
+  document.getElementById('regionList').innerHTML = REGIONS.map(function(r) {
+    return '<div class="si" data-rid="' + r.id + '">' +
+      '<div class="si-icon">' + (r.id === region.id ? '✅' : '🌍') + '</div>' +
+      '<div class="si-text"><div class="si-name">' + r.name + '</div>' +
+      (r.desc ? '<div class="si-desc">' + r.desc + '</div>' : '') + '</div></div>';
+  }).join('');
+  document.querySelectorAll('#regionList .si').forEach(function(el) {
+    el.addEventListener('click', function() { setRegion(el.dataset.rid); });
+  });
+  openM('mRegion');
+}
+
+function setRegion(id) {
+  region = REGIONS.find(function(r) { return r.id === id; }) || REGIONS[0];
+  save(); closeM('mRegion');
+  document.getElementById('regName').textContent = region.name;
+  document.getElementById('regDesc').textContent = region.desc;
+  showToast('📍 ' + region.name);
+  renderHome(); renderCalendar();
+}
+
+// ── EMOJI PICKER ──────────────────────────────────────────────────────────
+function buildEP(cid, getV, setV) {
+  var c = document.getElementById(cid);
+  c.innerHTML = '';
+  EMOJIS.forEach(function(e) {
+    var b = document.createElement('button');
+    b.className = 'epb' + (e === getV() ? ' sel' : '');
+    b.dataset.e = e;
+    b.textContent = e;
+    b.type = 'button';
+    b.addEventListener('click', function() {
+      setV(e);
+      c.querySelectorAll('.epb').forEach(function(x) { x.classList.toggle('sel', x.dataset.e === e); });
+    });
+    c.appendChild(b);
+  });
+}
+
+// ── МОДАЛКИ ───────────────────────────────────────────────────────────────
+function openM(id) { document.getElementById(id).classList.add('open'); }
+function closeM(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+var tTimer;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(tTimer);
+  tTimer = setTimeout(function() { t.classList.remove('show'); }, 2800);
+}
+
+// ── ЭКСПОРТ / ОЧИСТКА ────────────────────────────────────────────────────
+function exportData() {
+  var b = new Blob([JSON.stringify({harvests:harvests, diary:diary, spots:spots, region:region, exported:new Date().toISOString()}, null, 2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = 'lesnoy-dnevnik.json'; a.click();
+  showToast('📤 Экспортировано!');
+}
+function clearAll() {
+  if (!confirm('Удалить все данные? Это нельзя отменить.')) return;
+  harvests = []; diary = []; spots = [];
+  save(); renderHome(); renderCalendar(); renderDiary(); renderSpots();
+  showToast('🗑️ Данные удалены');
+}
+
+// ── НАВЕСИТЬ ВСЕ ОБРАБОТЧИКИ ──────────────────────────────────────────────
+document.querySelectorAll('.nbtn').forEach(function(btn) {
+  btn.addEventListener('click', function() { switchView(btn.dataset.view); });
+});
+document.querySelectorAll('.mclose').forEach(function(btn) {
+  btn.addEventListener('click', function() { closeM(btn.dataset.close); });
+});
+document.querySelectorAll('.moverlay').forEach(function(m) {
+  m.addEventListener('click', function(e) { if (e.target === m) m.classList.remove('open'); });
+});
+
+document.getElementById('btnCalPrev').addEventListener('click', function() {
+  calM--; if (calM < 0) { calM = 11; calY--; } renderCalendar();
+});
+document.getElementById('btnCalNext').addEventListener('click', function() {
+  calM++; if (calM > 11) { calM = 0; calY++; } renderCalendar();
+});
+
+document.getElementById('btnAddHarvest').addEventListener('click', openAddHarvest);
+document.getElementById('btnSaveHarvest').addEventListener('click', saveHarvest);
+document.getElementById('btnUpdateHarvest').addEventListener('click', updateHarvest);
+document.getElementById('btnDeleteHarvest').addEventListener('click', deleteHarvest);
+document.getElementById('btnAddDiary').addEventListener('click', openAddDiary);
+document.getElementById('btnSaveDiary').addEventListener('click', saveDiary);
+document.getElementById('btnAddSpot').addEventListener('click', function() {
+  if (!yMap) { showToast('❌ Карта ещё загружается'); return; }
+  var c = yMap.getCenter();
+  var name = prompt('Название места:'); if (!name) return;
+  var emoji = prompt('Иконка:', '📍') || '📍';
+  addSpot({id: Date.now(), emoji: emoji, name: name, lat: c[0], lng: c[1]});
+  showToast('📍 ' + name);
+});
+document.getElementById('btnLocate').addEventListener('click', function() {
+  if (!navigator.geolocation) { showToast('❌ Геолокация недоступна'); return; }
+  showToast('🎯 Ищу...');
+  navigator.geolocation.getCurrentPosition(
+    function(p) {
+      if (yMap) yMap.setCenter([p.coords.latitude, p.coords.longitude], 14, {duration: 600});
+      showToast('✅ Нашёл!');
+    },
+    function() { showToast('❌ Не удалось'); }
+  );
+});
+document.getElementById('btnOpenRegion').addEventListener('click', openRegion);
+document.getElementById('btnRequestNotify').addEventListener('click', function() {
+  if (!('Notification' in window)) { showToast('❌ Не поддерживается'); return; }
+  Notification.requestPermission().then(function(p) { showToast(p === 'granted' ? '🔔 Включено!' : '❌ Отклонено'); });
+});
+document.getElementById('toggleNotify').addEventListener('click', function() { this.classList.toggle('on'); });
+document.getElementById('btnExport').addEventListener('click', exportData);
+document.getElementById('btnClearAll').addEventListener('click', clearAll);
+document.getElementById('btnPhotoArea').addEventListener('click', function() { document.getElementById('photoIn').click(); });
+document.getElementById('photoIn').addEventListener('change', function() {
+  var f = this.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(ev) {
+    photoData = ev.target.result;
+    document.getElementById('photoPreview').innerHTML = '<img src="' + photoData + '" style="width:100%;border-radius:9px;max-height:170px;object-fit:cover;margin-top:5px">';
+  };
+  r.readAsDataURL(f);
+});
+
+// ── СТАРТ ─────────────────────────────────────────────────────────────────
+renderHome();
+</script>
+</body>
+</html>
