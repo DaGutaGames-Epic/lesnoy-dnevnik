@@ -1,6 +1,6 @@
 {
   "name": "Лесной Дневник",
-  "short_name": "Лесной Дн.",
+  "short_name": "Лесной Дневник",
   "description": "Напоминалка для сбора грибов, ягод и трав по сезону",
   "start_url": "/lesnoy-dnevnik/",
   "scope": "/lesnoy-dnevnik/",
